@@ -4,6 +4,7 @@ import pandas as pd
 import os
 
 DATASET_PATH = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\train"
+DATASET_PATH2 = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\test"
 CSV_PATH = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\train\_classes.csv"
 
 IMG_SIZE = (128, 128)
@@ -15,11 +16,19 @@ df = pd.read_csv(CSV_PATH)
 class_names = df.columns[1:]
 print("Classes :", list(class_names))
 
+CSV_PATH_TEST = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\test\_classes.csv"
+
+df_test = pd.read_csv(CSV_PATH_TEST)
+
+filepaths2 = df_test['filename'].apply(lambda x: os.path.join(DATASET_PATH2, x)).values
+labels2 = df_test[class_names].values.astype("float32")
+
 filepaths = df['filename'].apply(lambda x: os.path.join(DATASET_PATH, x)).values
 labels = df[class_names].values.astype("float32")
 
 
 dataset = tf.data.Dataset.from_tensor_slices((filepaths, labels))
+dataset2 = tf.data.Dataset.from_tensor_slices((filepaths2, labels2))
 
 dataset = dataset.shuffle(
     buffer_size=len(filepaths),
@@ -27,11 +36,9 @@ dataset = dataset.shuffle(
     reshuffle_each_iteration=False
 )
 
-dataset_size = len(filepaths)
-train_size = int(0.8 * dataset_size)
 
-train_dataset = dataset.take(train_size)
-val_dataset = dataset.skip(train_size)
+train_dataset = dataset
+val_dataset = dataset2
 
 def load_image(path, label):
     img = tf.io.read_file(path)
@@ -52,13 +59,8 @@ data_augmentation = tf.keras.Sequential([
     layers.RandomZoom(0.1),
 ])
 
-base_model = tf.keras.applications.MobileNetV2(
-    input_shape=(128, 128, 3),
-    include_top=False,
-    weights="imagenet"
-)
 
-base_model.trainable = False
+
 
 model = models.Sequential([
     layers.Input(shape=(128, 128, 3)),
@@ -116,3 +118,22 @@ results = model.evaluate(val_dataset)
 
 print("Perte :", results[0])
 print("Accuracy :", results[1])
+
+test_path = ""
+
+def predict_image(model, image_path, class_names):
+    img = tf.io.read_file(image_path)
+    img = tf.image.decode_jpeg(img, channels=3)
+    img = tf.image.resize(img, IMG_SIZE)
+    img = img / 255.0
+
+    img = tf.expand_dims(img, axis=0)
+
+    probs = model.predict(img)[0]
+
+    print("\nProbabilités par classe :")
+    for name, p in zip(class_names, probs):
+        print(f"{name}: {p:.4f}")
+
+    best_idx = np.argmax(probs)
+    print("\nPrédiction finale :", class_names[best_idx], f"({probs[best_idx]:.2f})")
