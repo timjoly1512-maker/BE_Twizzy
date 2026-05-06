@@ -63,7 +63,20 @@ base_model.trainable = False
 model = models.Sequential([
     layers.Input(shape=(128, 128, 3)),
     data_augmentation,
-    base_model,
+
+    layers.Conv2D(32, (3,3), activation='relu', padding='same'),
+    layers.MaxPooling2D(),
+
+    layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+    layers.MaxPooling2D(),
+
+    layers.Conv2D(128, (3,3), activation='relu', padding='same'),
+    layers.MaxPooling2D(),
+
+    layers.Conv2D(256, (3,3), activation='relu', padding='same'),
+    layers.MaxPooling2D(),
+
+    
     layers.GlobalAveragePooling2D(),
     layers.Dense(128, activation='relu'),
     layers.Dropout(0.3),
@@ -101,5 +114,5 @@ history = model.fit(
 
 results = model.evaluate(val_dataset)
 
-print("Loss :", results[0])
+print("Perte :", results[0])
 print("Accuracy :", results[1])
