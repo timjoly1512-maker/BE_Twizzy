@@ -133,9 +133,9 @@ def predict_image(model, image_path, class_names):
 
     print("\nProbabilités par classe :")
     for name, p in zip(class_names, probs):
-        print(f"{name}: {p:.4f}")
+        print(name + ' : ' + p)
 
     best_idx = np.argmax(probs)
-    print("\nPrédiction finale :", class_names[best_idx], f"({probs[best_idx]:.2f})")
+    print("\nPrédiction finale :", class_names[best_idx], probs[best_idx])
 
 predict_image(model, image_path, class_names)
