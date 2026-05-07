@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 import pandas as pd
 import os
+import numpy as np
 
 DATASET_PATH = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\train"
 DATASET_PATH2 = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\test"
@@ -10,6 +11,7 @@ CSV_PATH = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\train\_classes.csv"
 IMG_SIZE = (128, 128)
 BATCH_SIZE = 32
 
+image_path = r"C:\twizy\BDD_Roboflow_Tazi\BDD_Roboflow_Tazi\valid\00017_00025_jpg.rf.7f0c3b4f6c190e5e6e9c692615b359dd.jpg"
 
 df = pd.read_csv(CSV_PATH)
 
@@ -82,16 +84,14 @@ model = models.Sequential([
     layers.GlobalAveragePooling2D(),
     layers.Dense(128, activation='relu'),
     layers.Dropout(0.3),
-    layers.Dense(len(class_names), activation='sigmoid')
+    layers.Dense(len(class_names), activation='softmax')
 ])
 
 
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-    loss='binary_crossentropy',
-    metrics=[
-        tf.keras.metrics.BinaryAccuracy(),
-    ]
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
 )
 
 
@@ -119,7 +119,7 @@ results = model.evaluate(val_dataset)
 print("Perte :", results[0])
 print("Accuracy :", results[1])
 
-test_path = ""
+"""TEST SUR UNE IMAGE POUR VALIDATION"""
 
 def predict_image(model, image_path, class_names):
     img = tf.io.read_file(image_path)
@@ -137,3 +137,5 @@ def predict_image(model, image_path, class_names):
 
     best_idx = np.argmax(probs)
     print("\nPrédiction finale :", class_names[best_idx], f"({probs[best_idx]:.2f})")
+
+predict_image(model, image_path, class_names)
